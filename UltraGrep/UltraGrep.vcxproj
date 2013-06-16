@@ -78,6 +78,10 @@
   <ItemGroup>
     <ClCompile Include="UltraGrep_Main.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Match.h" />
+    <ClInclude Include="MatchCollector.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
