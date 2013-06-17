@@ -1,10 +1,19 @@
+/*
+ * File Name: Match.h
+ * Date:      June 14, 2013
+ * Author:    Milan Sobat
+ * Student #: 0469245
+ * Course:    INFO-5056
+ * Purpose:   Represents a matched item. Contains the file the item was found, the
+			  line it was found on, and the line itself.
+ */
+
 #ifndef __MATCH_H__
 #define __MATCH_H__
 
 #include <string>
 
 using namespace std;
-
 
 class Match {
 private:
