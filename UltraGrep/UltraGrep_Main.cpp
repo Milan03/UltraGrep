@@ -96,9 +96,13 @@ void scan_verbose( wpath const& f,  wregex const& reg ) {
 		for ( wstring i : extensions ) {
 			wstring extElement = L"." + i;
 			if ( !is_directory( d->status() ) && fileExt == extElement ) {	
+				bool nothingFound = true;
 				wstring dPath =  f / d->path();
+				wcout << endl;
 				wcout << "Scanning: " << dPath << endl;
-				
+				for ( int i = 0; i < (dPath.size() + 10); ++i )
+					wcout << "-";
+				wcout << endl;
 				wifstream fileStream( dPath.c_str(), ios::in );
 				if ( !fileStream.is_open() ) {
 					wcerr << L"Unable to open file: " << d->path() << endl;
@@ -118,7 +122,7 @@ void scan_verbose( wpath const& f,  wregex const& reg ) {
 						back_inserter< vector<wstring> >(tokens));
 
 					wsmatch m;
-				
+					
 					for ( const wstring& wstr : tokens ) {
 						if ( regex_search( wstr, m, reg ) ) {
 							Match* newMatch = new Match( dPath );
@@ -127,10 +131,15 @@ void scan_verbose( wpath const& f,  wregex const& reg ) {
 							matches.addMatch( newMatch );
 							print_output();
 							matches.removeAllMatches();
+							nothingFound = false;
 						}
 					}
 					
+					
 				}// end while ( !fileStream.eof() )
+				if ( nothingFound ) 
+						wcout << L" -- Nothing found -- " << endl;
+				wcout << endl;
 				fileStream.close();
 			}// end if ( !is_directory( d->status() ) && fileExt == L".txt" ) 
 		}// end for 
@@ -154,7 +163,7 @@ void scan( wpath const& f,  wregex const& reg ) {
 		//wcout << indent << d->path() << (is_directory( d->status() ) ? L" [dir]" : L"") << " ext=" << d->path().extension() << endl;
 		wstring fileExt = d->path().extension();
 		if ( extensions.empty() ) 
-			extensions.push_back( L".txt" );
+			extensions.push_back( L"txt" );
 
 		for ( wstring i : extensions ) {
 			wstring extElement = L"." + i;
@@ -213,6 +222,8 @@ int main ( int argc, char **argv ) {
 		return EXIT_FAILURE;
 	}
 
+
+	wstring const introMsg = L"UltraGrep - Milan Sobat 2013\n";
 	wstring wstrPath, regExp;
 	wpath path;
 
@@ -236,6 +247,8 @@ int main ( int argc, char **argv ) {
 
 		scan( path, reg );
 
+		wcout << introMsg << endl;
+
 		print_output();
 	}
 
@@ -256,6 +269,8 @@ int main ( int argc, char **argv ) {
 		
 			scan( path, reg );
 
+			wcout << introMsg << endl;
+
 			print_output();
 		} 
 		// i.e. -- ultragrep -v . Lorem -- 
@@ -270,6 +285,8 @@ int main ( int argc, char **argv ) {
 				path = wstrPath;
 
 			wregex reg( regExp );
+
+			wcout << introMsg << endl;
 			
 			scan_verbose( path, reg );
 		}
@@ -288,6 +305,8 @@ int main ( int argc, char **argv ) {
 		wregex reg( regExp );
 
 		split_string( extList, L".", extensions );
+
+		wcout << introMsg << endl;
 		
 		scan_verbose( path, reg );
 	}
