@@ -15,6 +15,7 @@
 #include <filesystem>
 #include <vector>
 #include <regex>
+#include <thread>
 #include "Match.h"
 #include "MatchCollector.h"
 
@@ -61,7 +62,7 @@ inline void split_string(const wstring& str, const wstring& delim, vector<wstrin
  * Accepts:       Nothing.
  * Returns:       Nothing.
  */
-void print_output() {
+inline void print_output() {
 	vector<match_ptr> vecMatches = matches.getVector();
 	int matchOccurance = 1;
 	
@@ -77,6 +78,31 @@ void print_output() {
 		}
 		wcout << endl;
 	}
+}
+
+/*
+ * Function Name: print_output_verbose()
+ * Purpose:       Prints matches found while scanning.
+ * Accepts:       Nothing.
+ * Returns:       Nothing.
+ */
+inline void print_output_verbose() {
+	vector<match_ptr> vecMatches = matches.getVector();
+	int matchOccurance = 1;
+	
+	wcout << vecMatches.size() << " matches found: " << endl;
+	for ( size_t i = 0; i < vecMatches.size(); ++i ) {		
+		wcout << L"File: " << vecMatches[i]->getFile() << endl;
+		if ( i > 0 && vecMatches[i-1]->getLineNumber() == vecMatches[i]->getLineNumber() ) {
+			++matchOccurance;
+			wcout << L"[" << vecMatches[i]->getLineNumber() << L":" << matchOccurance << L"]: " << vecMatches[i]->getLine() << endl;
+		} else {
+			matchOccurance = 1;
+			wcout << L"[" << vecMatches[i]->getLineNumber() << L"]: " << vecMatches[i]->getLine() << endl;
+		}
+		wcout << endl;
+	}
+	matches.removeAllMatches();
 }
 
 /*
@@ -100,7 +126,7 @@ void scan_verbose( wpath const& f,  wregex const& reg ) {
 				wstring dPath =  f / d->path();
 				wcout << endl;
 				wcout << "Scanning: " << dPath << endl;
-				for ( int i = 0; i < (dPath.size() + 10); ++i )
+				for ( int i = 0; i != (dPath.size() + 10); ++i )
 					wcout << "-";
 				wcout << endl;
 				wifstream fileStream( dPath.c_str(), ios::in );
@@ -129,22 +155,27 @@ void scan_verbose( wpath const& f,  wregex const& reg ) {
 							newMatch->setLineNumber( lineCount );
 							newMatch->setLine( line );
 							matches.addMatch( newMatch );
-							print_output();
-							matches.removeAllMatches();
+							//print_output();
+							//matches.removeAllMatches();
 							nothingFound = false;
 						}
+						//print_output();
 					}
 					
 					
 				}// end while ( !fileStream.eof() )
 				if ( nothingFound ) 
 						wcout << L" -- Nothing found -- " << endl;
+				else 
+					print_output_verbose();
 				wcout << endl;
 				fileStream.close();
 			}// end if ( !is_directory( d->status() ) && fileExt == L".txt" ) 
 		}// end for 
-		if ( is_directory( d->status() ) )
-			scan_verbose( f / d->path(), reg );
+		if ( is_directory( d->status() ) ) {
+			thread t ( scan_verbose, (f/d->path()), reg );
+			t.join();
+		}
 	}
 }
 
@@ -156,11 +187,7 @@ void scan_verbose( wpath const& f,  wregex const& reg ) {
  * Returns:       Nothing.
  */
 void scan( wpath const& f,  wregex const& reg ) {
-	//wstring indent( i, L'\t' );
-	//wcout << indent << "Folder = " << system_complete( f ) << endl;
-
 	for ( wdirectory_iterator d(f), e; d != e; ++d ) {
-		//wcout << indent << d->path() << (is_directory( d->status() ) ? L" [dir]" : L"") << " ext=" << d->path().extension() << endl;
 		wstring fileExt = d->path().extension();
 		if ( extensions.empty() ) 
 			extensions.push_back( L"txt" );
@@ -201,8 +228,10 @@ void scan( wpath const& f,  wregex const& reg ) {
 				fileStream.close();
 			}// end if ( !is_directory( d->status() ) && fileExt == L".txt" ) 
 		}// end for 
-		if ( is_directory( d->status() ) )
-			scan( f / d->path(), reg );
+		if ( is_directory( d->status() ) ) {
+			thread t ( scan, ( f/d->path()), reg );
+			t.join();
+		}
 	}
 }
 
@@ -245,7 +274,8 @@ int main ( int argc, char **argv ) {
 
 		wcout << path << (is_directory( path ) ? L" [dir]" : L"")<< endl;
 
-		scan( path, reg );
+		thread t( scan, path, reg );
+		t.join();
 
 		wcout << introMsg << endl;
 
@@ -267,7 +297,8 @@ int main ( int argc, char **argv ) {
 
 			split_string( extList, L".", extensions );
 		
-			scan( path, reg );
+			thread t( scan, path, reg );
+			t.join();
 
 			wcout << introMsg << endl;
 
@@ -288,7 +319,8 @@ int main ( int argc, char **argv ) {
 
 			wcout << introMsg << endl;
 			
-			scan_verbose( path, reg );
+			thread t ( scan_verbose, path, reg );
+			t.join();
 		}
 	}
 
@@ -308,7 +340,8 @@ int main ( int argc, char **argv ) {
 
 		wcout << introMsg << endl;
 		
-		scan_verbose( path, reg );
+		thread t ( scan_verbose, path, reg );
+		t.join();
 	}
 
 	return 0;
